@@ -1,30 +1,39 @@
 import { Module } from '@nestjs/common';
-import { createObserveModule } from '@nestjs/observe';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
-import { AdminsModule } from './admins/admins.module.js';
-import { StudentsModule } from './students/students.module.js';
-import { CoursesModule } from './courses/courses.module.js';
-import { EnrollmentsModule } from './enrollments/enrollments.module.js';
-
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdminsModule } from './admins/admins.module';
+import { StudentsModule } from './students/students.module';
+import { CoursesModule } from './courses/courses.module';
+import { EnrollmentsModule } from './enrollments/enrollments.module';
 
 @Module({
   imports: [
-    // Distributed tracing, auto-correlated logs, request/job metrics, error
-    // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com,
-    // then run `npx @nestjs/observe link` to write your key pair into .env.
-    ObserveModule.forRoot({
-      appKey: process.env.OBSERVE_APP_KEY ?? 'YOUR_APP_KEY',
-      appSecret: process.env.OBSERVE_APP_SECRET ?? 'YOUR_APP_SECRET',
-      serviceId: 'education',
+    // تفعيل ملف الـ .env على مستوى التطبيق بالكامل
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
+
+    // إعداد اتصال TypeOrm مع PostgreSQL عبر المتغيرات
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST', 'localhost'),
+        port: configService.get<number>('DB_PORT', 5432),
+        username: configService.get<string>('DB_USER', 'postgres'),
+        password: configService.get<string>('DB_PASSWORD', 'postgres'),
+        database: configService.get<string>('DB_NAME', 'education_db'),
+        autoLoadEntities: true, 
+        synchronize: true, 
+        logging: true, 
+      }),
+    }),
+
     AdminsModule,
     StudentsModule,
     CoursesModule,
     EnrollmentsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
