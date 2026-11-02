@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Unique, Relation } from 'typeorm';
 import { Student } from '@/students/entities/student.entity';
 import { Course } from '@/courses/entities/course.entity';
 
@@ -14,13 +14,15 @@ export class Enrollment {
   @Column()
   courseId: string;
 
+  
   @ManyToOne(() => Student, (student) => student.enrollments, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'studentId' })
-  student: Student;
+  student: Relation<Student>;
 
+  
   @ManyToOne(() => Course, (course) => course.enrollments, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course: Relation<Course>;
 
   @Column('decimal', { precision: 10, scale: 2 })
   priceAtEnrollment: number;
