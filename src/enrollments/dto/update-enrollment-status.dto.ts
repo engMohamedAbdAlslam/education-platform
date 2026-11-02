@@ -1,7 +1,6 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { PartialType, OmitType } from '@nestjs/mapped-types';
+import { CreateEnrollmentDto } from './create-enrollment.dto'; 
 
-export class UpdateEnrollmentStatusDto {
-  @IsString()
-  @IsNotEmpty()
-  status: string; 
-}
+export class UpdateEnrollmentStatusDto extends PartialType(
+  OmitType(CreateEnrollmentDto, ['studentId', 'courseId'] as const),
+) {}
