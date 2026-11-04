@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Unique, Relation } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Unique, Relation, DeleteDateColumn } from 'typeorm';
 import { Student } from '@/students/entities/student.entity';
 import { Course } from '@/courses/entities/course.entity';
+import { EnrollmentStatus } from '../enums/enrollment-status.enum';
 
 @Entity('enrollments')
 @Unique(['student', 'course']) 
@@ -27,9 +28,11 @@ export class Enrollment {
   @Column('decimal', { precision: 10, scale: 2 })
   priceAtEnrollment: number;
 
-  @Column({ default: 'active' })
-  status: string; // active, cancelled, etc.
+  @Column({ default: EnrollmentStatus.ACTIVE })
+  status: EnrollmentStatus;
 
   @CreateDateColumn()
   enrolledAt: Date;
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

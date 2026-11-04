@@ -1,5 +1,9 @@
-// src/enrollments/enrollments.service.ts
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Enrollment } from './entities/enrollment.entity';
@@ -7,6 +11,7 @@ import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { UpdateEnrollmentStatusDto } from './dto/update-enrollment-status.dto';
 import { StudentsService } from '../students/students.service';
 import { CoursesService } from '../courses/courses.service';
+import { EnrollmentStatus } from './enums/enrollment-status.enum';
 
 @Injectable()
 export class EnrollmentsService {
@@ -17,45 +22,47 @@ export class EnrollmentsService {
     private readonly coursesService: CoursesService,
   ) {}
 
-  // 1. تسجيل طالب في دورة مع حساب وتثبيت priceAtEnrollment
   async create(createEnrollmentDto: CreateEnrollmentDto) {
     const { studentId, courseId } = createEnrollmentDto;
 
-    // أ. التأكد من وجود الطالب
-    await this.studentsService.findOne(studentId);
+    const [student, course] = await Promise.all([
+      this.studentsService.findOne(studentId),
+      this.coursesService.findOne(courseId),
+    ]);
 
-    // ب. التأكد من وجود الدورة والحصول على سعرها النهائي الحالي (بعد الخصم)
-    const course = await this.coursesService.findOne(courseId);
+    if (!student) {
+      throw new NotFoundException(`Student with ID #${studentId} not found`);
+    }
+
     if (!course.isActive) {
       throw new BadRequestException('Cannot enroll in an inactive course.');
-      }
-    // ج. التحقق من وجود تسجيل سابق بين هذا الطالب وتلك الدورة
+    }
+
     const existingEnrollment = await this.enrollmentRepository.findOne({
       where: { studentId, courseId },
     });
 
     if (existingEnrollment) {
-      if (existingEnrollment.status === 'active') {
-        throw new ConflictException('Student is already actively enrolled in this course.');
+      if (existingEnrollment.status === EnrollmentStatus.ACTIVE) {
+        throw new ConflictException(
+          'Student is already actively enrolled in this course.',
+        );
       }
-      // إذا كان مسجلاً مسبقاً ولكن الحالة ملغية (Cancelled)، نقوم بإعادة تفعيله وتحديث السعر التاريخي
-      existingEnrollment.status = 'active';
+      existingEnrollment.status = EnrollmentStatus.ACTIVE;
       existingEnrollment.priceAtEnrollment = course.finalPrice;
       return await this.enrollmentRepository.save(existingEnrollment);
     }
 
-    // د. إنشاء سجل تسجيل جديد بالكامل
     const enrollment = this.enrollmentRepository.create({
       studentId,
       courseId,
       priceAtEnrollment: course.finalPrice,
-      status: 'active',
+      status: EnrollmentStatus.ACTIVE,
     });
 
     return await this.enrollmentRepository.save(enrollment);
   }
 
-  // 2. جلب جميع التسجيلات مع بيانات الطالب والدورة
   async findAll() {
     return await this.enrollmentRepository.find({
       relations: {
@@ -65,7 +72,6 @@ export class EnrollmentsService {
     });
   }
 
-  // 3. جلب تسجيل واحد بالـ ID
   async findOne(id: string) {
     const enrollment = await this.enrollmentRepository.findOne({
       where: { id },
@@ -82,17 +88,14 @@ export class EnrollmentsService {
     return enrollment;
   }
 
-  // 4. تحديث حالة التسجيل (مثل الإلغاء CANCELLED)
   async updateStatus(id: string, updateStatusDto: UpdateEnrollmentStatusDto) {
     const enrollment = await this.findOne(id);
     enrollment.status = updateStatusDto.status;
     return await this.enrollmentRepository.save(enrollment);
   }
 
-  // 5. الحذف النهائي للتسجيل
-  async remove(id: string) {
+  async remove(id: string): Promise<void> {
     const enrollment = await this.findOne(id);
-    await this.enrollmentRepository.remove(enrollment);
-    return { message: `Enrollment with ID #${id} has been permanently deleted.` };
+    await this.enrollmentRepository.softRemove(enrollment);
   }
 }

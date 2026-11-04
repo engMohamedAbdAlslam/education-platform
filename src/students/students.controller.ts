@@ -1,5 +1,15 @@
-// src/students/students.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -18,23 +28,27 @@ export class StudentsController {
     return this.studentsService.findAll();
   }
 
+  @Get(':id/enrollments')
+  findStudentEnrollments(@Param('id', ParseUUIDPipe) id: string) {
+    return this.studentsService.findStudentEnrollments(id);
+  }
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.studentsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ) {
     return this.studentsService.update(id, updateStudentDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.studentsService.remove(id);
-  }
-
-  @Get(':id/enrollments')
-  findStudentEnrollments(@Param('id') id: string) {
-    return this.studentsService.findStudentEnrollments(id);
   }
 }

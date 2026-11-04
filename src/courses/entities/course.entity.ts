@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Relation } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Relation, DeleteDateColumn } from 'typeorm';
 import { Enrollment } from '@/enrollments/entities/enrollment.entity';
-
+import { CourseDiscountType } from '../enums/course-discount-type.enum';
 @Entity('courses')
 export class Course {
   @PrimaryGeneratedColumn('uuid')
@@ -16,7 +16,7 @@ export class Course {
   price: number;
 
   @Column({ type: 'varchar', nullable: true })
-  discountType: 'percentage' | 'fixed';
+  discountType: CourseDiscountType;
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   discountValue: number;
@@ -26,6 +26,8 @@ export class Course {
 
   @CreateDateColumn()
   createdAt: Date;
+  @DeleteDateColumn()
+  deletedAt: Date;
 
   @OneToMany(() => Enrollment, (enrollment) => enrollment.course)
   enrollments: Relation<Enrollment>[];

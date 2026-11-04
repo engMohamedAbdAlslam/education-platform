@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsBoolean, IsIn, Min } from 'class-validator';
-
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsBoolean, Min, IsEnum } from 'class-validator';
+import { CourseDiscountType } from '../enums/course-discount-type.enum';
 export class CreateCourseDto {
   @IsString()
   @IsNotEmpty()
@@ -13,10 +13,11 @@ export class CreateCourseDto {
   @Min(0)
   price: number;
 
-  @IsString()
-  @IsIn(['percentage', 'fixed'])
+  @IsEnum(CourseDiscountType, {
+    message: 'discountType must be NONE, PERCENTAGE, or FIXED',
+  })
   @IsOptional()
-  discountType?: 'percentage' | 'fixed';
+  discountType?: CourseDiscountType;
 
   @IsNumber()
   @Min(0)

@@ -1,6 +1,8 @@
-import { PartialType, OmitType } from '@nestjs/mapped-types';
-import { CreateEnrollmentDto } from './create-enrollment.dto'; 
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { EnrollmentStatus } from '../enums/enrollment-status.enum';
 
-export class UpdateEnrollmentStatusDto extends PartialType(
-  OmitType(CreateEnrollmentDto, ['studentId', 'courseId'] as const),
-) {}
+export class UpdateEnrollmentStatusDto {
+  @IsNotEmpty()
+  @IsEnum(EnrollmentStatus)
+  status: EnrollmentStatus;
+}

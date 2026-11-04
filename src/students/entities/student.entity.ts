@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Relation } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Relation, DeleteDateColumn } from 'typeorm';
 import { Enrollment } from '@/enrollments/entities/enrollment.entity';
 
 @Entity('students')
@@ -17,7 +17,8 @@ export class Student {
 
   @CreateDateColumn()
   createdAt: Date;
-
+  @DeleteDateColumn()
+  deletedAt: Date;
   @OneToMany(() => Enrollment, (enrollment) => enrollment.student)
   enrollments: Relation<Enrollment>[];
 }
